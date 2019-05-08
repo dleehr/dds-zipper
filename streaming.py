@@ -9,15 +9,15 @@ app = Flask(__name__)
 # add each url
 
 urls = [
-  ('https://raw.githubusercontent.com/Duke-GCB/bespin-api/master/Dockerfile', 'bespin-api/Dockerfile'),
-  ('https://raw.githubusercontent.com/Duke-GCB/bespin-api/master/requirements.txt', 'bespin-api/requirements.txt'),
-  ('https://github.com/allanlei/python-zipstream/archive/master.zip', 'zipstream/master.zip'),
+  ('http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.fa.gz', 'bigZips/hg38.fa.gz'),
+  ('http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.fa.masked.gz', 'bigZips/hg38.fa.masked.gz'),
+  ('http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.fa.out.gz', 'bigZips/hg38.fa.out.gz'),
   ]
 
 def fetch(url):
   print('FETCH {}'.format(url))
   r = requests.get(url, stream=True)
-  for chunk in r.iter_content(chunk_size=None):
+  for chunk in r.raw.stream():
     print('RECEIVE {}'.format(len(chunk)))
     yield chunk
 
