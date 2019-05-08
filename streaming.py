@@ -7,7 +7,8 @@ import zipstream
 # add each url
 
 urls = [
-  ('https://raw.githubusercontent.com/Duke-GCB/bespin-api/master/Dockerfile', 'Dockerfile')
+  ('https://raw.githubusercontent.com/Duke-GCB/bespin-api/master/Dockerfile', 'bespin-api/Dockerfile'),
+  ('https://raw.githubusercontent.com/Duke-GCB/bespin-api/master/requirements.txt', 'bespin-api/requirements.txt'),
   ]
 
 def fetch(url):
