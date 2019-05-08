@@ -3,11 +3,6 @@ import zipstream
 from flask import Flask, Response
 app = Flask(__name__)
 
-# list of urls
-# create a zip file
-# stream it
-# add each url
-
 urls = [
   ('http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.fa.gz', 'bigZips/hg38.fa.gz'),
   ('http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.fa.masked.gz', 'bigZips/hg38.fa.masked.gz'),
@@ -27,11 +22,6 @@ def stream():
     print('write_iter {}'.format(filename))
     z.write_iter(filename, fetch(url))
   return z
-
-# write_iter takes a name and a function that yields bytes from a file
-# write_iter(arcname, iterable, compress_type=None, buffer_size=None) method of zipstream.ZipFile instance
-#    Write the bytes iterable `iterable` to the archive under the name `arcname`.
-# z.write_iter()
 
 @app.route("/zipfile.zip", methods=['GET'], endpoint='zipfile')
 def zipfile():
