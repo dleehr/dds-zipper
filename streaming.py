@@ -1,5 +1,7 @@
 import requests
 import zipstream
+from flask import Flask, Response
+app = Flask(__name__)
 
 # list of urls
 # create a zip file
@@ -19,19 +21,27 @@ def fetch(url):
     print('RECEIVE {}'.format(len(chunk)))
     yield chunk
 
-z = zipstream.ZipFile()
-
-for (url, filename) in urls:
-  print('calling write_iter with {}'.format(filename))
-  z.write_iter(filename, fetch(url))
-
-# finally, write the zipfile
-with open('zipfile.zip', 'wb') as f:
-  for data in z:
-    print('WRITE {}'.format(len(data)))
-    f.write(data)
+def stream():
+  z = zipstream.ZipFile()
+  for (url, filename) in urls:
+    print('write_iter {}'.format(filename))
+    z.write_iter(filename, fetch(url))
+  return z
 
 # write_iter takes a name and a function that yields bytes from a file
 # write_iter(arcname, iterable, compress_type=None, buffer_size=None) method of zipstream.ZipFile instance
 #    Write the bytes iterable `iterable` to the archive under the name `arcname`.
 # z.write_iter()
+
+@app.route("/zipfile.zip", methods=['GET'], endpoint='zipfile')
+def zipfile():
+  def generate():
+    z = stream()
+    for chunk in z:
+      print('WRITE {}'.format(len(chunk)))
+      yield chunk
+
+  response = Response(generate(), mimetype='application/zip')
+  response.headers['Content-Disposition'] = 'attachment; filename={}'.format('zipfile.zip')
+  print('RESPOND')
+  return response
