@@ -1,7 +1,12 @@
 import requests
 import zipstream
+from ddsc.sdk.client import Client, PathToFiles
+
 from flask import Flask, Response
 app = Flask(__name__)
+
+project_name = 'pythonint_test'
+project_id = '20c1b14c-91c6-4a30-ab5e-aec4d632ee65'
 
 urls = [
   ('http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.fa.gz', 'bigZips/hg38.fa.gz'),
@@ -16,11 +21,30 @@ def fetch(url):
     print('RECEIVE {}'.format(len(chunk)))
     yield chunk
 
+def get_url(client, dds_file):
+  print('GETURL')
+  # This is a time-sensitive call, so we should only do it right before fetch
+  fd = client.dds_connection.get_file_download(dds_file.id)
+  return '{}{}'.format(fd.host, fd.url)
+
+def fetch_dds_file(client, dds_file):
+  url = get_url(client, dds_file)
+  return fetch(url)
+
+def get_dds_paths(client, project_id):
+  children = client.dds_connection.get_project_children(project_id)
+  ptf = PathToFiles()
+  for child in children:
+    ptf.add_paths_for_children_of_node(child)
+  return ptf.paths # OrderedDict of path -> File
+
 def stream():
   z = zipstream.ZipFile()
-  for (url, filename) in urls:
+  client = Client()
+  paths = get_dds_paths(client, project_id)
+  for (filename, dds_file) in paths.items():
     print('write_iter {}'.format(filename))
-    z.write_iter(filename, fetch(url))
+    z.write_iter(filename, fetch_dds_file(client, dds_file))
   return z
 
 @app.route("/zipfile.zip", methods=['GET'], endpoint='zipfile')
@@ -35,3 +59,13 @@ def zipfile():
   response.headers['Content-Disposition'] = 'attachment; filename={}'.format('zipfile.zip')
   print('RESPOND')
   return response
+
+def main():
+    z = stream()
+    with open('zipfile.zip', 'wb') as f:
+      for data in z:
+        print('WRITE {}'.format(len(data)))
+        f.write(data)
+
+if __name__=='__main__':
+  main()
