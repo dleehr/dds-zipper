@@ -14,22 +14,19 @@ urls = [
   ('http://hgdownload.cse.ucsc.edu/goldenpath/hg38/bigZips/hg38.fa.out.gz', 'bigZips/hg38.fa.out.gz'),
   ]
 
-def fetch(url):
-  print('FETCH {}'.format(url))
-  r = requests.get(url, stream=True)
-  for chunk in r.raw.stream():
-    print('RECEIVE {}'.format(len(chunk)))
-    yield chunk
-
 def get_url(client, dds_file):
   print('GETURL')
   # This is a time-sensitive call, so we should only do it right before fetch
   fd = client.dds_connection.get_file_download(dds_file.id)
   return '{}{}'.format(fd.host, fd.url)
 
-def fetch_dds_file(client, dds_file):
+def fetch(client, dds_file):
   url = get_url(client, dds_file)
-  return fetch(url)
+  print('FETCH {}'.format(url))
+  r = requests.get(url, stream=True)
+  for chunk in r.raw.stream():
+    print('RECEIVE {}'.format(len(chunk)))
+    yield chunk
 
 def get_dds_paths(client, project_id):
   children = client.dds_connection.get_project_children(project_id)
@@ -44,7 +41,7 @@ def stream():
   paths = get_dds_paths(client, project_id)
   for (filename, dds_file) in paths.items():
     print('write_iter {}'.format(filename))
-    z.write_iter(filename, fetch_dds_file(client, dds_file))
+    z.write_iter(filename, fetch(client, dds_file))
   return z
 
 @app.route("/zipfile.zip", methods=['GET'], endpoint='zipfile')
